@@ -4,70 +4,48 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ForgotPassword.css";
 
+import StepOne from "./StepOne";
+import StepTwo from "./StepTwo";
+import StepThree from "./StepThree";
+
 function ForgotPassword({ onClose = () => {} }) {
-  const [email, setEmail] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [matchedAccounts, setMatchedAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [username, setUsername] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-
-  console.log("🔄 ForgotPassword component rendered");
+  const [showResetOptions, setShowResetOptions] = useState(false);
 
   const handleSearchAccount = async () => {
     setLoading(true);
     setError("");
     try {
-      console.log("🔍 Sending search for:", email.trim());
-      const response = await axios.post(
-        "http://localhost:8080/search-account",
-        {
-          username_or_email: email.trim(),
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("✅ Search response:", response.data);
-
-      const { username, email: foundEmail } = response.data;
-      setUsername(username);
-      setUserEmail(foundEmail);
+      const response = await axios.post("http://localhost:8080/search-account", {
+        query: searchInput.trim(),
+      });
+      setMatchedAccounts(response.data.accounts);
       setStep(2);
-
-      toast.success("Account found! Please enter the verification code.");
+      toast.success("Accounts matched. Please select yours.");
     } catch (err) {
-      console.error("❌ Search error:", err);
-      setError(err.response?.data?.message || "Account not found.");
-      toast.error(err.response?.data?.message || "Account not found.");
+      setError(err.response?.data?.message || "No matching account found.");
+      toast.error(err.response?.data?.message || "No matching account found.");
     }
     setLoading(false);
   };
 
   const handleSendResetCode = async () => {
+    if (!selectedAccount?.email) return;
     setLoading(true);
     setError("");
     try {
-      console.log("📨 Sending reset code to:", userEmail);
-      const response = await axios.post(
-        "http://localhost:8080/send-reset-code",
-        {
-          username: userEmail,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("✅ Reset code sent:", response.data);
+      await axios.post("http://localhost:8080/send-reset-code", {
+        email: selectedAccount.email,
+      });
       toast.success("Password reset code sent!");
     } catch (err) {
-      console.error("❌ Send code error:", err);
       setError(err.response?.data?.message || "Failed to send reset code.");
       toast.error(err.response?.data?.message || "Failed to send reset code.");
     }
@@ -75,28 +53,18 @@ function ForgotPassword({ onClose = () => {} }) {
   };
 
   const handleResetPassword = async () => {
+    if (!selectedAccount?.email) return;
     setLoading(true);
     setError("");
     try {
-      console.log("🔐 Resetting password for:", userEmail);
-      const response = await axios.post(
-        "http://localhost:8080/reset-password",
-        {
-          email: userEmail,
-          code,
-          new_password: newPassword,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("✅ Password reset:", response.data);
+      await axios.post("http://localhost:8080/reset-password", {
+        email: selectedAccount.email,
+        code,
+        new_password: newPassword,
+      });
       toast.success("Password reset successful!");
       onClose();
     } catch (err) {
-      console.error("❌ Reset error:", err);
       setError(err.response?.data?.message || "Reset failed.");
       toast.error(err.response?.data?.message || "Reset failed.");
     }
@@ -108,96 +76,45 @@ function ForgotPassword({ onClose = () => {} }) {
       <div className="login">
         <div className="reset-container">
           <div className="login-header">
-            <h2>{step === 1 ? "Forgot Password" : "Reset Password"}</h2>
+            <h2>Forgot Password</h2>
             <button className="close-button" onClick={onClose}>
               <i className="bi bi-x-lg"></i>
             </button>
           </div>
 
-          {step === 1 ? (
-            <div className="form-group">
-              <p className="instruction-text">
-                Enter your username or email address and we'll send you a verification code.
-              </p>
-              <div className="input-group">
-                <i className="bi bi-envelope input-icon"></i>
-                <input
-                  type="text"
-                  placeholder="Username or Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="styled-input"
-                />
-              </div>
-              <button
-                className={`submit-button ${loading ? "loading" : ""}`}
-                onClick={() => {
-                  console.log("🔘 Search button clicked");
-                  handleSearchAccount();
-                }}
-                disabled={loading || !email.trim()}
-              >
-                {loading ? <div className="spinner"></div> : "Search Account"}
-              </button>
-            </div>
-          ) : (
-            <div className="form-group">
-              <div className="connected-info">
-                <div className="info-item">
-                  <i className="bi bi-person"></i>
-                  <span>
-                    Username: <strong>{username}</strong>
-                  </span>
-                </div>
-                <div className="info-item">
-                  <i className="bi bi-envelope"></i>
-                  <span>
-                    Email: <strong>{userEmail}</strong>
-                  </span>
-                </div>
-              </div>
+          {step === 1 && (
+            <StepOne
+              searchInput={searchInput}
+              setSearchInput={setSearchInput}
+              handleSearchAccount={handleSearchAccount}
+              loading={loading}
+            />
+          )}
 
-              <div className="input-group">
-                <i className="bi bi-shield-lock input-icon"></i>
-                <input
-                  type="text"
-                  placeholder="Enter Verification Code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  required
-                  className="styled-input"
-                />
-              </div>
+          {step === 2 && (
+            <StepTwo
+              matchedAccounts={matchedAccounts}
+              onSelect={(acc) => {
+                setSelectedAccount(acc);
+                setStep(3);
+              }}
+              onBack={() => setStep(1)}
+            />
+          )}
 
-              <div className="input-group">
-                <i className="bi bi-key input-icon"></i>
-                <input
-                  type="password"
-                  placeholder="Enter New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  className="styled-input"
-                />
-              </div>
-
-              <button
-                className={`submit-button ${loading ? "loading" : ""}`}
-                onClick={handleResetPassword}
-                disabled={loading || !code.trim() || !newPassword.trim()}
-              >
-                {loading ? <div className="spinner"></div> : "Reset Password"}
-              </button>
-
-              <button
-                className="submit-button"
-                onClick={handleSendResetCode}
-                disabled={loading}
-              >
-                {loading ? <div className="spinner"></div> : "Send Reset Code"}
-              </button>
-            </div>
+          {step === 3 && selectedAccount && (
+            <StepThree
+              selectedAccount={selectedAccount}
+              code={code}
+              newPassword={newPassword}
+              setCode={setCode}
+              setNewPassword={setNewPassword}
+              handleResetPassword={handleResetPassword}
+              handleSendResetCode={handleSendResetCode}
+              showResetOptions={showResetOptions}
+              setShowResetOptions={setShowResetOptions}
+              loading={loading}
+            />
           )}
 
           {error && (
@@ -208,16 +125,7 @@ function ForgotPassword({ onClose = () => {} }) {
           )}
         </div>
       </div>
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeButton={true}
-        pauseOnFocusLoss={false}
-        draggable
-        pauseOnHover
-      />
+      <ToastContainer position="top-center" autoClose={5000} />
     </div>
   );
 }

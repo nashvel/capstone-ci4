@@ -4,15 +4,27 @@
     margin: 40px auto;
     padding: 20px;
     background-color: #fff;
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
+    position: relative;
 }
 
-.my-profile-wrapper h2 {
-    margin-bottom: 20px;
-    text-align: center;
-    color: #333;
+/* Settings Icon */
+.settings-icon {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    opacity: 0.8;
+    transition: 0.2s;
+    z-index: 10;
+  }
+
+.settings-icon:hover {
+    opacity: 1;
 }
 
 .profile-inputs {
@@ -22,36 +34,112 @@
     gap: 20px;
 }
 
-.profile-inputs img {
-    width: 50px;
-    margin-bottom: 10px;
+.profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.avatar-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ddd;
+}
+
+.edit-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #000000a0;
+    color: #fff;
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 50% 0 0 0;
+    cursor: pointer;
+}
+
+.name-section h2 {
+    font-size: 1.25rem;
+    margin: 0;
+    color: #333;
+}
+
+.edit-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border: none;
+    background-color: #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 5px;
 }
 
 .profile-inputs form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
 }
 
 .profile-inputs input {
-    padding: 10px 12px;
-    outline: none;
+    padding: 12px;
     border: 1px solid #d0d0d0;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 15px;
     transition: border 0.3s;
+    width: 100%;
 }
 
 .profile-inputs input:focus {
     border-color: tomato;
 }
 
-.my-profile-wrapper .button-wrapper {
+.section-title {
+    margin-top: 1rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.multi-fields-profile,
+.multi-fields-profile-2 {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.multi-fields-profile input:nth-child(1) {
+    flex: 1;
+    min-width: 30%;
+}
+.multi-fields-profile input:nth-child(2) {
+    flex: 2;
+    min-width: 65%;
+}
+
+.multi-fields-profile-2 input:nth-child(1) {
+    flex: 3;
+}
+.multi-fields-profile-2 input:nth-child(2) {
+    flex: 2;
+}
+
+.button-wrapper {
     display: flex;
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
+    margin-top: 1.5rem;
 }
 
 .button-wrapper button {
@@ -87,29 +175,6 @@
     background-color: rgb(180, 0, 0);
 }
 
-.multi-fields-profile,
-.multi-fields-profile-2 {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.multi-fields-profile input:nth-child(1) {
-    flex: 1;
-    min-width: 30%;
-}
-.multi-fields-profile input:nth-child(2) {
-    flex: 2;
-    min-width: 65%;
-}
-
-.multi-fields-profile-2 input:nth-child(1) {
-    flex: 3;
-}
-.multi-fields-profile-2 input:nth-child(2) {
-    flex: 2;
-}
-
 h4 {
     margin-top: 20px;
     text-align: center;
@@ -124,8 +189,15 @@ h4 {
         border-radius: 8px;
     }
 
-    .profile-inputs form {
-        width: 100%;
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .multi-fields-profile,
+    .multi-fields-profile-2 {
+        flex-direction: column;
     }
 
     .button-wrapper {
@@ -136,8 +208,10 @@ h4 {
         width: 100%;
     }
 
-    .multi-fields-profile,
-    .multi-fields-profile-2 {
-        flex-direction: column;
+    .settings-icon {
+        top: 15px;
+        right: 15px;
+        width: 22px;
+        height: 22px;
     }
 }

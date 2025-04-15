@@ -7,8 +7,10 @@ use App\Models\UserModel;
 use App\Models\VerificationCodeModel;
 use CodeIgniter\Email\Email;
 use CodeIgniter\I18n\Time;
+use CodeIgniter\RESTful\ResourceController;
 
-class Auth extends Controller
+
+class Auth extends ResourceController
 {
     protected $userModel;
     protected $verificationModel;
@@ -21,63 +23,82 @@ class Auth extends Controller
 
     public function signup()
     {
-        // Get JSON data
-        $data = $this->request->getJSON(true); // true ensures it returns an associative array
-        log_message('debug', 'POST data: ' . print_r($data, true));
-    
-        // Check if email is provided
+        $data = $this->request->getJSON(true);
+
         $email = $data['email'] ?? null;
-        if (empty($email)) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email is required']);
-        }
-    
-        $username = $data['username'] ?? null;
-        if (empty($username)) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Username is required']);
-        }
-    
+        $firstName = $data['first_name'] ?? null;
+        $lastName = $data['last_name'] ?? null;
         $password = $data['password'] ?? null;
-        if (empty($password)) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Password is required']);
+
+        if (!$email || !$firstName || !$lastName || !$password) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'All fields are required']);
         }
-    
-        // Hash password and proceed with the logic
-        $password = password_hash($password, PASSWORD_DEFAULT);
-    
-        // Check if email or username already exists
-        if ($this->userModel->where('email', $email)->first()) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email already registered']);
+
+        $existingUser = $this->userModel->where('email', $email)->first();
+
+        if ($existingUser) {
+            if ($existingUser['is_verified']) {
+                return $this->response->setStatusCode(400)->setJSON(['message' => 'Email already registered']);
+            } else {
+                // Check last code sent time
+                $lastCode = $this->verificationModel
+                    ->where('user_id', $existingUser['id'])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+        
+                    $timezone = 'Asia/Manila'; // actual timezone
+                    $now = Time::now($timezone);
+                    
+                    if ($lastCode) {
+                        $lastSent = Time::parse($lastCode['created_at'], $timezone);
+                        $nextAllowed = $lastSent->addSeconds(30);
+                    
+                        if ($nextAllowed->isAfter($now)) {
+                            $wait = $nextAllowed->getTimestamp() - $now->getTimestamp();
+                            return $this->response->setStatusCode(429)->setJSON([
+                                'message' => "Please wait {$wait} seconds before requesting a new code"
+                            ]);
+                        }
+                    }                    
+        
+                $code = random_int(100000, 999999);
+                $this->sendVerificationEmail($email, $code);
+        
+                $this->verificationModel->insert([
+                    'user_id' => $existingUser['id'],
+                    'code' => $code,
+                    'created_at' => Time::now('Asia/Manila')->toDateTimeString()
+                ]);
+                
+        
+                return $this->response->setJSON(['message' => 'New verification code sent to email']);
+            }
         }
-        if ($this->userModel->where('username', $username)->first()) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Username already taken']);
-        }
-    
-        // Insert new user
+        
+
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
         $this->userModel->insert([
             'email' => $email,
-            'username' => $username,
-            'password' => $password,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'password' => $hashedPassword,
             'is_verified' => 0
-        ]); 
-        
-        log_message('debug', 'Last Query: ' . $this->userModel->getLastQuery());
+        ]);
         
         $user = $this->userModel->where('email', $email)->first();
-    
-        // Generate verification code and send email
         $code = random_int(100000, 999999);
+        
         $this->sendVerificationEmail($email, $code);
-    
-        // Insert verification code
+        
         $this->verificationModel->insert([
             'user_id' => $user['id'],
-            'code' => $code
-        ]);
-    
+            'code' => $code,
+            'created_at' => Time::now('Asia/Manila')->toDateTimeString()
+        ]);        
+        
         return $this->response->setJSON(['message' => 'Verification code sent to email']);
-    }
-    
-    
+    }        
 
     public function sendVerificationEmail($toEmail, $code)
     {
@@ -108,101 +129,111 @@ class Auth extends Controller
             return $this->response->setStatusCode(404)->setJSON(['message' => 'User not found']);
         }
     
-        // Get verification entry by user ID
-        $verification = $this->verificationModel->where('user_id', $user['id'])->first();
+        // Get the latest verification code
+        $verification = $this->verificationModel
+            ->where('user_id', $user['id'])
+            ->orderBy('created_at', 'desc')
+            ->first();
     
         if (!$verification || $verification['code'] !== $code) {
             return $this->response->setStatusCode(400)->setJSON(['message' => 'Invalid or expired verification code']);
         }
     
+        // Check if the code is expired (e.g., valid for 10 minutes)
+        $timezone = 'Asia/Manila';
+        $createdAt = Time::parse($verification['created_at'], $timezone);
+        $expiresAt = $createdAt->addMinutes(10);
+        $now = Time::now($timezone);
+
+        log_message('debug', 'Now: ' . $now);
+        log_message('debug', 'Code Created At: ' . $createdAt);
+        log_message('debug', 'Expires At: ' . $expiresAt);
+
+    
+        if ($now->isAfter($expiresAt)) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Verification code has expired']);
+        }
+    
         // Mark user as verified
         $this->userModel->update($user['id'], ['is_verified' => 1]);
     
-        // Delete verification record
-        $this->verificationModel->delete($verification['id']);
+        // Delete all verification codes for this user
+        $this->verificationModel->where('user_id', $user['id'])->delete();
     
         return $this->response->setJSON(['message' => 'Email verified successfully']);
-    }
+    }  
     
-    
-    
+    public function verifyPassword()
+{
+    $data = $this->request->getJSON(true);
+    $email = $data['email'] ?? '';
+    $password = $data['password'] ?? '';
 
+    $user = $this->userModel->where('email', $email)->first();
+
+    if (!$user || !password_verify($password, $user['password'])) {
+        return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Incorrect password.']);
+    }
+
+    return $this->response->setJSON(['success' => true]);
+}
+
+    
     public function login()
     {
-        // Get JSON data
-        $data = $this->request->getJSON(true); // true ensures it returns an associative array
-    
-        // Log the incoming data for debugging
-        log_message('debug', 'Login data: ' . print_r($data, true));
-    
-        $emailOrUsername = $data['email'] ?? null;
+        $data = $this->request->getJSON(true);
+        $email = $data['email'] ?? null;
         $password = $data['password'] ?? null;
-    
-        // Log individual fields to ensure they're correctly parsed
-        log_message('debug', 'Email: ' . $emailOrUsername);
-        log_message('debug', 'Password: ' . $password);
-    
-        // Check if email and password are provided
-        if (!$emailOrUsername || !$password) {
+
+        if (!$email || !$password) {
             return $this->response->setStatusCode(400)->setJSON(['message' => 'Email and password are required']);
         }
-    
-        // Check if the email exists in the database
-        $user = $this->userModel->where('email', $emailOrUsername)->first();
-    
-        // Check if the user exists and if the password matches
+
+        $user = $this->userModel->where('email', $email)->first();
+
         if (!$user || !password_verify($password, $user['password'])) {
             return $this->response->setStatusCode(401)->setJSON(['message' => 'Invalid email or password']);
         }
-    
-        // Check if email is verified
+
         if ($user['is_verified'] == 0) {
             return $this->response->setStatusCode(403)->setJSON(['message' => 'Email not verified']);
         }
-    
-        // Return success response
+
         return $this->response->setJSON([
             'message' => 'Login successful',
             'email' => $user['email'],
-            'username' => $user['username']
+            'first_name' => $user['first_name'],
+            'last_name' => $user['last_name']
         ]);
-        
     }
-    
-    
+
 
     public function sendResetCode()
     {
-        // Get JSON data
-        $data = $this->request->getJSON(true);
-        log_message('debug', 'Reset code request data: ' . print_r($data, true)); // Log the incoming data for debugging
-    
-        // Check if email is provided in the payload
-        $email = $data['username'] ?? null; // This should match your frontend parameter name
-        if (!$email) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email (username) is required']);
-        }
-    
-        // Check if the user exists by email (username in this case)
+        $email = $this->request->getJSON()->email ?? null;
         $user = $this->userModel->where('email', $email)->first();
+    
         if (!$user) {
-            return $this->response->setStatusCode(404)->setJSON(['message' => 'Email not found']);
+            return $this->response->setStatusCode(404)->setJSON(['message' => 'User not found']);
         }
     
-        // Generate a random reset code
-        $code = random_int(100000, 999999);
-        $this->sendVerificationEmail($email, $code);
+        $code = rand(100000, 999999);
     
-        // Insert reset code into the verification table
+        // Use insert() instead of save()
         $this->verificationModel->insert([
-            'email' => $email,
-            'code' => $code
+            'user_id'    => $user['id'],
+            'email'      => $email,
+            'code'       => $code,
+            'type'       => 'password_reset', // optional if you're using type
+            'expires_at' => Time::now('Asia/Manila')->addMinutes(5)->toDateTimeString(),
         ]);
     
-        return $this->response->setJSON(['message' => 'Password reset code sent']);
+        $this->sendVerificationEmail($email, $code);
+    
+        return $this->respond(['message' => 'Reset code sent']);
     }
     
-
+    
     public function resetPassword()
     {
         $data = $this->request->getJSON(true); // Use getJSON(true) to get the data as an associative array
@@ -244,59 +275,154 @@ class Auth extends Controller
     public function searchAccount()
     {
         $data = $this->request->getJSON(true);
-        log_message('debug', 'SearchAccount data: ' . print_r($data, true));  // 👈 Add this
+        $query = $data['query'] ?? null;
     
-        $searchTerm = $data['username_or_email'] ?? null;
-        log_message('debug', 'Search term: ' . $searchTerm);  // 👈 Add this
-    
-        if (empty($searchTerm)) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email or username is required']);
+        if (!$query) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Query is required']);
         }
     
-        $user = $this->userModel
-                    ->groupStart()
-                    ->where('email', $searchTerm)
-                    ->orWhere('username', $searchTerm)
-                    ->groupEnd()
-                    ->first();
-    
-        log_message('debug', 'User found: ' . print_r($user, true));  // 👈 Add this
-    
-        if (!$user) {
-            return $this->response->setStatusCode(404)->setJSON(['message' => 'Account not found']);
+        // Check if the query is an email
+        if (filter_var($query, FILTER_VALIDATE_EMAIL)) {
+            $users = $this->userModel
+                ->select('first_name, last_name, email')
+                ->where('email', $query)
+                ->findAll();
+        } else {
+            // Search by first name (partial match)
+            $users = $this->userModel
+                ->select('first_name, last_name, email')
+                ->like('first_name', $query)
+                ->findAll();
         }
     
-        return $this->response->setJSON([
-            'username' => $user['username'],
-            'email' => $user['email'],
-        ]);
-    }    
+        if (empty($users)) {
+            return $this->response->setStatusCode(404)->setJSON(['message' => 'No matching account found']);
+        }
+    
+        return $this->response->setJSON(['accounts' => $users]);
+    }
+    
+    
 
     public function updateName()
-{
-    $data = $this->request->getJSON(true);
-    log_message('debug', 'Update Name data: ' . print_r($data, true)); // Log the incoming data for debugging
+    {
+        $data = $this->request->getJSON(true);
+        $email = $data['email'] ?? null;
+        $firstName = $data['first_name'] ?? null;
+        $lastName = $data['last_name'] ?? null;
 
-    $email = $data['email'] ?? null;
-    $newName = $data['name'] ?? null;
+        if (!$email || !$firstName || !$lastName) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email, first name, and last name are required']);
+        }
 
-    if (empty($email) || empty($newName)) {
-        return $this->response->setStatusCode(400)->setJSON(['message' => 'Email and new name are required']);
+        $user = $this->userModel->where('email', $email)->first();
+
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['message' => 'User not found']);
+        }
+
+        $this->userModel->update($user['id'], [
+            'first_name' => $firstName,
+            'last_name' => $lastName
+        ]);
+
+        return $this->response->setJSON(['message' => 'Name updated successfully']);
     }
 
-    // Find the user by email
-    $user = $this->userModel->where('email', $email)->first();
+    public function skipLogin()
+    {
+        $request = $this->request;
+        $input = $request->getJSON(true);
+    
+        $email = isset($input['email']) ? trim($input['email']) : null;
+    
+        if (!$email) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Email is required'
+            ]);
+        }
+    
+        $user = $this->userModel->where('email', $email)->first();
+    
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON([
+                'success' => false,
+                'message' => 'User not found'
+            ]);
+        }
+    
+        // Simulate login success
+        return $this->response->setStatusCode(200)->setJSON([
+            'success' => true,
+            'message' => 'Logged in via skip',
+            'user' => $user
+        ]);
+    }
+    
+    
 
-    if (!$user) {
-        return $this->response->setStatusCode(404)->setJSON(['message' => 'User not found']);
+    public function updatePasswordDirectly()
+    {
+        $data = $this->request->getJSON(true);
+    
+        $email = $data['email'] ?? null;
+        $newPassword = $data['new_password'] ?? null;
+    
+        if (!$email || !$newPassword) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email and new password are required']);
+        }
+    
+        $user = $this->userModel->where('email', $email)->first();
+    
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['message' => 'User not found']);
+        }
+    
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $this->userModel->update($user['id'], ['password' => $hashedPassword]);
+    
+        return $this->response->setJSON(['message' => 'Password updated successfully']);
     }
 
-    // Update the user's name
-    $this->userModel->update($user['id'], ['username' => $newName]);
 
-    // Return success response
-    return $this->response->setJSON(['message' => 'Name updated successfully']);
-}
+    public function verifyResetCode()
+    {
+        $data = $this->request->getJSON();
+        $email = $data->email ?? null;
+        $code = $data->code ?? null;
+    
+        if (!$email || !$code) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Missing email or code']);
+        }
+    
+        $user = $this->userModel->where('email', $email)->first();
+    
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['message' => 'User not found']);
+        }
+    
+        $verification = $this->verificationModel
+            ->where('user_id', $user['id'])
+            ->where('code', $code)
+            ->orderBy('id', 'desc') // just in case multiple codes exist
+            ->first();
+    
+        if (!$verification) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Invalid code']);
+        }
+    
+        if (!$verification['expires_at']) {
+            return $this->response->setStatusCode(500)->setJSON(['message' => 'Missing expiration time for the code']);
+        }        
+        
+        $expiresAt = Time::parse($verification['expires_at'], 'Asia/Manila');        
+        $now = Time::now('Asia/Manila');
 
+        if ($now->isAfter($expiresAt)) {
+           return $this->response->setStatusCode(400)->setJSON(['message' => 'Code expired']);
+        } 
+
+    }    
 
 }    

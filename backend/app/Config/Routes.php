@@ -33,6 +33,10 @@ $routes->options('(:any)', function() {
 //Auth routes
 $routes->post('signup', 'Auth::signup');
 $routes->post('verify-email', 'Auth::verifyEmail');
+$routes->post('updatePasswordDirectly', 'Auth::updatePasswordDirectly');
+$routes->post('/skipLogin', 'Auth::skipLogin');
+$routes->post('verify-reset-code', 'Auth::verifyResetCode');
+$routes->post('verify-password', 'Auth::verifyPassword');
 $routes->post('login', 'Auth::login');
 $routes->post('send-reset-code', 'Auth::sendResetCode');
 $routes->post('reset-password', 'Auth::resetPassword');

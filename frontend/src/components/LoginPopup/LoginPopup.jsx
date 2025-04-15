@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";  // Import Toastify
-import "react-toastify/dist/ReactToastify.css";  // Import Toastify CSS
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
 import ForgotPassword from "./ForgotPassword";
@@ -15,7 +15,8 @@ function LoginPopup({ setShowLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
   });
@@ -24,36 +25,85 @@ function LoginPopup({ setShowLogin }) {
 
   const [verificationPending, setVerificationPending] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
+  const [cooldown, setCooldown] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(30);
+  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const emailDomains = ["@gmail.com", "@yahoo.com", "@outlook.com", "@hotmail.com"];
 
-  const onChangeHandler = (e) => {
-    const { name, value } = e.target;
-    setUserData((data) => ({ ...data, [name]: value }));
-    setError("");
-  };
+
+
+const sanitizeInput = (value) => {
+  // Allow alphanumeric, @, ., _, -
+  return value.replace(/[^a-zA-Z0-9@._-]/g, "");
+};
+
+
+
+const onChangeHandler = (e) => {
+  const { name, value } = e.target;
+  let sanitizedValue = sanitizeInput(value);
+
+  if (name === "email") {
+    if (!sanitizedValue.includes("@") && sanitizedValue.length > 2) {
+      const partial = sanitizedValue;
+      setEmailSuggestions(emailDomains.map((domain) => partial + domain));
+    } else {
+      setEmailSuggestions([]); // hide suggestions if "@" is typed
+    }
+  }
+
+  setUserData((data) => ({ ...data, [name]: sanitizedValue }));
+  setError("");
+};
+
+
+const handleEmailSuggestionClick = (suggestion) => {
+  setUserData((data) => ({ ...data, email: suggestion }));
+  setEmailSuggestions([]); // hide after selecting
+};
+
 
   const handleSignup = async () => {
     try {
       const response = await axios.post(
         "http://localhost:8080/signup",
         {
-          username: userData.name,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
           email: userData.email,
           password: userData.password,
         },
         {
           headers: {
-            "Content-Type": "application/json", 
+            "Content-Type": "application/json",
           },
         }
       );
-  
+
       setVerificationPending(true);
-      toast.success("Signup successful! Please verify your email."); 
+      toast.success("Signup successful! Please verify your email.");
+      startCooldown();
     } catch (err) {
       setError(err.response?.data?.detail || "Signup failed.");
-      toast.error(err.response?.data?.detail || "Signup failed.");  
+      toast.error(err.response?.data?.detail || "Signup failed.");
     }
   };
+
+  const startCooldown = () => {
+    setCooldown(true);
+    setSecondsLeft(30);
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+  
 
   const handleVerifyCode = async () => {
     try {
@@ -65,72 +115,52 @@ function LoginPopup({ setShowLogin }) {
         },
         {
           headers: {
-            "Content-Type": "application/json", // Ensure JSON content type
+            "Content-Type": "application/json",
           },
         }
       );
-      
-      // Log the response for debugging if necessary
-      console.log(response.data);
-  
+
       toast.success("Account verified! You can now log in.");
       setVerificationPending(false);
       setVerificationCode("");
-      setCurrState("Login");
+      await handleLogin();
     } catch (err) {
-      // Handle errors properly
       setError(err.response?.data?.message || "Verification failed.");
       toast.error(err.response?.data?.message || "Verification failed.");
     }
   };
-   
+
   const handleLogin = async () => {
-    try {
-      const res = await axios.post(
-        "http://localhost:8080/login", 
-        {
-          email: userData.email,
-          password: userData.password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json", 
-          },
-        }
-      );
-  
-      // If login is successful
-      if (res.data.message === "Login successful") {
-        // Assuming the response has username as well as the message
-        setToken("mock_token_123"); // Set your token if needed
-        setEmail(userData.email);
-        
-        // Store necessary data in localStorage
-        localStorage.setItem("Token", "mock_token_123");
-        localStorage.setItem("Email", userData.email);
-        localStorage.setItem("Name", res.data.username);  // Store username from backend
-  
-        setShowLogin(false);  // Hide login form (if you're using a state for this)
-        
-        toast.success("Login successful!");  // Success toast
-  
-        // Navigate based on email or other condition
-        if (userData.email === "client@gmail.com") {
-          navigate("/access/client");
-        } else {
-          navigate("/");  // Redirect to home or default dashboard
-        }
-      } else {
-        // Handle unsuccessful login attempt
-        toast.error("Login failed! Please try again.");  // Error toast
-      }
-    } catch (err) {
-      console.log(err);
-      // Handle errors with a user-friendly message
-      setError(err.response?.data?.message || "Login failed.");
-      toast.error(err.response?.data?.message || "An error occurred during login.");
+    if (!userData.email || !userData.password) {
+      toast.error("Please enter email and password");
+      return;
     }
-  };   
+  
+    try {
+      const response = await axios.post('http://localhost:8080/login', {
+        email: userData.email,
+        password: userData.password
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      toast.success(response.data.message || "Login successful!");
+  
+      localStorage.setItem("Token", response.data.token);  // this fixes the navbar
+      localStorage.setItem("Email", userData.email);    
+  
+      setTimeout(() => {
+        setShowLogin(false); // hide the popup *after* toast appears
+        window.location.reload(); // or redirect with navigate if you prefer
+      }, 500);
+    } catch (error) {
+      const message = error.response?.data?.message || "Login failed";
+      toast.error(message);
+    }
+  };
+  
   
 
   const onSubmitHandler = async (e) => {
@@ -164,39 +194,66 @@ function LoginPopup({ setShowLogin }) {
                 <>
                   <div className="login-inputs">
                     {currState === "Sign Up" && (
-                      <div className="input-group">
-                        <i className="bi bi-person input-icon"></i>
-                        <input
-                          name="name"
-                          onChange={onChangeHandler}
-                          value={userData.name}
-                          type="text"
-                          placeholder="Your name"
-                          required
-                        />
-                      </div>
+                      <>
+                        <div className="input-group">
+                          <i className="bi bi-person input-icon"></i>
+                          <input
+                            name="firstName"
+                            onChange={onChangeHandler}
+                            value={userData.firstName}
+                            type="text"
+                            placeholder="First name"
+                            required
+                          />
+                        </div>
+                        <div className="input-group">
+                          <i className="bi bi-person input-icon"></i>
+                          <input
+                            name="lastName"
+                            onChange={onChangeHandler}
+                            value={userData.lastName}
+                            type="text"
+                            placeholder="Last name"
+                            required
+                          />
+                        </div>
+                      </>
                     )}
-                    <div className="input-group">
-                      <i className="bi bi-envelope input-icon"></i>
-                      <input
-                        name="email"
-                        onChange={onChangeHandler}
-                        value={userData.email}
-                        type="email"
-                        placeholder="Enter Username or Email"
-                        required
-                      />
-                    </div>
+                        <div className="input-group" style={{ position: "relative" }}>
+                          <i className="bi bi-envelope input-icon"></i>
+                          <input
+                            name="email"
+                            onChange={onChangeHandler}
+                            value={userData.email}
+                            type="email"
+                            placeholder="Enter your email"
+                            required
+                            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                            title="Enter a valid email"
+                          />
+                          {emailSuggestions.length > 0 && (
+                            <ul className="email-suggestions">
+                              {emailSuggestions.map((suggestion, idx) => (
+                                <li key={idx} onClick={() => handleEmailSuggestionClick(suggestion)}>
+                                  {suggestion}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                     <div className="input-group">
                       <i className="bi bi-lock input-icon"></i>
                       <input
-                        name="password"
-                        onChange={onChangeHandler}
-                        value={userData.password}
-                        type={showPassword ? "text" : "password"}
-                        placeholder={currState === "Sign Up" ? "Set your password" : "Your password"}
-                        required
-                      />
+                          name="password"
+                          onChange={onChangeHandler}
+                          value={userData.password}
+                          type={showPassword ? "text" : "password"}
+                          placeholder={currState === "Sign Up" ? "Set your password" : "Your password"}
+                          required
+                          pattern="^[a-zA-Z0-9!@#$%^&*()_+=-]{6,}$"
+                          title="Min 6 characters. Letters, numbers & symbols only."
+                        />
+
                       <button
                         type="button"
                         className="show-password"
@@ -227,7 +284,9 @@ function LoginPopup({ setShowLogin }) {
                   )}
 
                   <p className="toggle-state">
-                    {currState === "Sign Up" ? "Already have an account?" : "Create a new account?"}
+                    {currState === "Sign Up"
+                      ? "Already have an account?"
+                      : "Create a new account?"}
                     <span onClick={() => setCurrState(currState === "Sign Up" ? "Login" : "Sign Up")}>
                       {currState === "Sign Up" ? "Login" : "Sign up"}
                     </span>
@@ -235,7 +294,9 @@ function LoginPopup({ setShowLogin }) {
                 </>
               ) : (
                 <div className="verification-section">
-                  <p>Enter the verification code sent to <b>{userData.email}</b></p>
+                  <p>
+                    Enter the verification code sent to <b>{userData.email}</b>
+                  </p>
                   <input
                     type="text"
                     value={verificationCode}
@@ -247,10 +308,23 @@ function LoginPopup({ setShowLogin }) {
                     type="button"
                     className="submit-button"
                     onClick={handleVerifyCode}
-                    disabled={loading}
+                    disabled={loading || verificationCode.length !== 6}
                   >
                     {loading ? <div className="spinner"></div> : "Verify"}
                   </button>
+
+                  <button
+                    type="button"
+                    className="resend-code-button"
+                    onClick={() => {
+                      handleSignup(); // trigger resend
+                      startCooldown(); // restart cooldown
+                    }}
+                    disabled={cooldown}
+                  >
+                    {cooldown ? `Resend Code (${secondsLeft}s)` : "Resend Code"}
+                  </button>
+
                   {error && <p className="error-message">{error}</p>}
                 </div>
               )}
@@ -258,9 +332,17 @@ function LoginPopup({ setShowLogin }) {
           </div>
         </div>
       )}
-      
-      {/* Toast Container for Notifications */}
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeButton={true} pauseOnFocusLoss={false} draggable pauseOnHover />
+
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeButton={true}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover
+      />
     </>
   );
 }
