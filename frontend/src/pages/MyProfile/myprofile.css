@@ -1,0 +1,143 @@
+.my-profile-wrapper {
+    width: 100%;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.my-profile-wrapper h2 {
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+.profile-inputs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.profile-inputs img {
+    width: 50px;
+    margin-bottom: 10px;
+}
+
+.profile-inputs form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.profile-inputs input {
+    padding: 10px 12px;
+    outline: none;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border 0.3s;
+}
+
+.profile-inputs input:focus {
+    border-color: tomato;
+}
+
+.my-profile-wrapper .button-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.button-wrapper button {
+    flex: 1;
+    border: none;
+    padding: 10px 15px;
+    color: white;
+    font-size: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+}
+
+.button-wrapper button:nth-child(1) {
+    background-color: rgb(129, 71, 255);
+}
+.button-wrapper button:nth-child(1):hover {
+    background-color: rgb(110, 50, 240);
+}
+
+.button-wrapper button:nth-child(2) {
+    background-color: tomato;
+}
+.button-wrapper button:nth-child(2):hover {
+    background-color: #ff6347;
+}
+
+.button-wrapper button:nth-child(3) {
+    background-color: rgb(214, 0, 0);
+}
+.button-wrapper button:nth-child(3):hover {
+    background-color: rgb(180, 0, 0);
+}
+
+.multi-fields-profile,
+.multi-fields-profile-2 {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.multi-fields-profile input:nth-child(1) {
+    flex: 1;
+    min-width: 30%;
+}
+.multi-fields-profile input:nth-child(2) {
+    flex: 2;
+    min-width: 65%;
+}
+
+.multi-fields-profile-2 input:nth-child(1) {
+    flex: 3;
+}
+.multi-fields-profile-2 input:nth-child(2) {
+    flex: 2;
+}
+
+h4 {
+    margin-top: 20px;
+    text-align: center;
+    font-weight: 500;
+    color: #888;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    .my-profile-wrapper {
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .profile-inputs form {
+        width: 100%;
+    }
+
+    .button-wrapper {
+        flex-direction: column;
+    }
+
+    .button-wrapper button {
+        width: 100%;
+    }
+
+    .multi-fields-profile,
+    .multi-fields-profile-2 {
+        flex-direction: column;
+    }
+}

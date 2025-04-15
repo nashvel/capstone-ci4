@@ -1,0 +1,133 @@
+.my-orders {
+    margin: 50px 0 45vh 0;
+  }
+  
+  .my-orders h1 {
+    font-size: 24px;
+    color: #333;
+    text-align: center;
+  }
+  
+  .my-orders .container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 30px;
+  }
+  
+  .my-orders-order {
+    border: 1px solid tomato;
+    border-radius: 8px;
+    padding: 20px;
+    color: #454545;
+  }
+  
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  
+  .order-header p {
+    margin: 0;
+  }
+  
+  .order-header p span {
+    color: red;
+  }
+  
+  .order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .order-item {
+    display: grid;
+    grid-template-columns: 50px 2fr 1fr 1fr 1fr;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e2e2;
+  }
+  
+  .order-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  
+  .order-item p {
+    margin: 0;
+    font-size: 14px;
+  }
+  
+  .my-orders-order button {
+    border: none;
+    padding: 12px 0px;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #ffe1e1;
+    color: #454545;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 20px;
+  }
+  
+  .my-order-signout {
+    margin: 20vh 0;
+    display: flex;
+    gap: 40px;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .my-order-signout img {
+    width: 200px;
+  }
+  
+  .my-order-signout p {
+    font-size: 16px;
+    color: #454545;
+  }
+
+  .clear-orders-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    transition: 0.3s;
+  }
+  
+  .clear-orders-btn:hover {
+    background-color: #cc0000;
+  }
+  
+  
+  @media (max-width: 900px) {
+    .my-orders {
+      margin: 50px 0 10vh 0;
+    }
+  
+    .order-header {
+      flex-direction: column;
+      gap: 10px;
+    }
+  
+    .order-item {
+      grid-template-columns: 50px 2fr 1fr;
+      gap: 10px;
+      font-size: 12px;
+    }
+  
+    .my-orders-order button {
+      padding: 8px 0px;
+      font-size: 12px;
+    }
+  }

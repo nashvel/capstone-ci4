@@ -1,0 +1,206 @@
+.footer {
+    background: linear-gradient(135deg, #1b1b1b, #2a2a2a);
+    color: white;
+    padding: 50px 20px;
+    text-align: center;
+    font-family: "Poppins", sans-serif;
+    position: relative;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 40px;
+  }
+  
+  /* Left Section (Logo & Get in Touch) */
+  .footer-content-left {
+    flex: 1;
+    min-width: 280px;
+    text-align: left;
+  }
+  
+  .footer-content-left img {
+    width: 220px;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .footer-content-left img:hover {
+    transform: scale(1.05);
+  }
+  
+  .footer-content-left p {
+    font-size: 0.9rem;
+    max-width: 300px;
+    margin: 15px 0;
+    color: #bdbdbd;
+    line-height: 1.6;
+  }
+  
+  /* Social Media Icons */
+  .footer-social-icons {
+    margin-top: 10px;
+  }
+  
+  .footer-social-icons img {
+    width: 32px;
+    margin: 0 8px;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out, filter 0.3s;
+  }
+  
+  .footer-social-icons img:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+  }
+  
+  /* Middle Section (Company) */
+  .footer-content-center {
+    flex: 1;
+    min-width: 220px;
+    text-align: center;
+  }
+  
+  .footer-content-center h2 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #ffcc00;
+  }
+  
+  .footer-content-center ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .footer-content-center li {
+    font-size: 0.95rem;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: color 0.3s ease-in-out;
+    color: #cfcfcf;
+  }
+  
+  .footer-content-center li:hover {
+    color: #ffcc00;
+  }
+  
+  /* Right Section (Get in Touch) */
+  .footer-content-right {
+    flex: 1;
+    min-width: 280px;
+    text-align: right;
+  }
+  
+  .footer-content-right h2 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #ff6b6b;
+  }
+  
+  .footer-content-right ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .footer-content-right li {
+    font-size: 0.95rem;
+    margin: 8px 0;
+    color: #cfcfcf;
+  }
+  
+  /* Payment Methods */
+  .footer-content-payment {
+    width: 100%;
+    text-align: center;
+    margin-top: 30px;
+  }
+  
+  .footer-content-payment h2 {
+    font-size: 1.2rem;
+    color: #ffcc00;
+  }
+  
+  .footer-content-payment .gcash-logo {
+    width: 80px;
+    margin-top: 10px;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .footer-content-payment .gcash-logo:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Stylish Divider */
+  .footer-divider {
+    width: 80%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 30px auto;
+  }
+  
+  /* Copyright Section */
+  .footer-copyright {
+    font-size: 0.85rem;
+    color: #a1a1a1;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+  
+  /* Small Note */
+  .footer-note {
+    font-size: 0.8rem;
+    color: #ff6b6b;
+    opacity: 0.8;
+  }
+  
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+    }
+  
+    .footer-content-left,
+    .footer-content-right,
+    .footer-content-center {
+      text-align: center;
+    }
+  
+    .footer-content-left img {
+      width: 160px;
+    }
+  
+    .footer-content-left p {
+      font-size: 0.8rem;
+    }
+  
+    .footer-content-center h2,
+    .footer-content-right h2,
+    .footer-content-payment h2 {
+      font-size: 1.1rem;
+    }
+  
+    .footer-content-center li,
+    .footer-content-right li {
+      font-size: 0.85rem;
+    }
+  
+    .footer-social-icons img {
+      width: 28px;
+    }
+  
+    .footer-content-payment .gcash-logo {
+      width: 60px;
+    }
+  
+    .footer-copyright {
+      font-size: 0.75rem;
+    }
+  }
+  

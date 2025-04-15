@@ -1,0 +1,7 @@
+/* Main Header Container - Transparent, No Border */
+.main-header-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(10px); /* Optional: Adds a subtle blur effect */
+}

@@ -1,0 +1,421 @@
+.explore-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px; /* Increased width */
+    margin: 0 auto;
+}
+
+.restaurant-details {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 0.6rem !important; /* Force smaller text */
+    color: #555;
+    font-weight: 500;
+    width: fit-content;
+    padding-left: 0 !important; /* Remove padding */
+    line-height: 1; /* Reduce spacing */
+}
+
+/* Ensure individual items are not growing too big */
+.restaurant-details p {
+    margin: 0;
+    font-size: 0.55rem !important; /* Force smaller text */
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+/* Icons */
+.restaurant-details i {
+    color: #ff6b6b;
+    font-size: 10px !important; /* Make icons smaller */
+    margin-right: 3px;
+}
+
+.unavailable {
+    filter: grayscale(100%); /* Black & white */
+    opacity: 0.5; /* Faded effect */
+    pointer-events: none; /* Disable clicks */
+}
+
+.bw-image {
+    filter: grayscale(100%);
+}
+
+
+
+
+.explore-menu h1 {
+    color: #262626;
+    font-weight: 500;
+    text-align: center;
+}
+
+.explore-menu-text {
+    max-width: 60%;
+    color: #808080;
+    text-align: center;
+    margin: 0 auto;
+}
+
+/* Menu List - Wider Layout */
+.explore-menu-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    text-align: center;
+    margin: 30px 0;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.explore-menu-list::-webkit-scrollbar {
+    display: none;
+}
+
+/* Menu Items - Wider & Bigger */
+.explore-menu-list-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, #ffffff, #f8f8f8);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    cursor: pointer;
+    width: 320px; /* WIDER */
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.explore-menu-list-item img {
+    width: 300px; /* Bigger images */
+    height: 200px;
+    object-fit: cover;
+    border-radius: 18px;
+    transition: transform 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.explore-menu-list-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.explore-menu-list-item:hover img {
+    transform: scale(1.08);
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.explore-menu-list-item p {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 15px;
+    color: #333;
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+}
+
+
+.explore-menu-list-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* Active Category */
+.explore-menu-list-item.active {
+    opacity: 0.8;
+    background: linear-gradient(135deg, #fff5cc, #ffeb99);
+    box-shadow: 0 10px 25px rgba(255, 204, 0, 0.2);
+}
+
+/* Address Input Section */
+.address-input-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+}
+
+.address-input {
+    width: 100%;
+    padding: 12px 50px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    cursor: not-allowed;
+}
+
+/* Location Icon */
+.location-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 22px;
+    color: #ff6b6b;
+}
+
+/* Locate Me Button */
+.locate-me-btn {
+    padding: 12px 20px;
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.locate-me-btn:hover {
+    background-color: #ff5252;
+    transform: scale(1.05);
+}
+
+/* Error Message */
+.error-message {
+    color: red;
+    margin-top: 5px;
+    text-align: center;
+}
+
+/* Map Section */
+/* Map Section - Wider & More Aesthetic */
+.map-container {
+    width: 100%;
+    max-width: 800px; /* Increased width for a better layout */
+    height: 380px; /* Increased height */
+    margin: 20px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #ddd;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out, height 0.5s ease-in-out;
+}
+
+/* When the map is visible */
+.map-container.show {
+    opacity: 1;
+    transform: translateY(0);
+    height: 380px;
+}
+
+/* When the map is hidden */
+.map-container.hide {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    height: 0;
+    margin-top: 0;
+}
+
+/* Google Maps iframe */
+.location-map {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 10px;
+}
+
+.rating {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.star-icon {
+    font-size: 22px; /* Bigger stars for better visibility */
+    color: #ffcc00; /* Rich golden tone */
+    transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+    text-shadow: 0px 0px 6px rgba(255, 204, 0, 0.6); /* Soft glow */
+}
+
+.explore-menu-list-item:hover .star-icon {
+    transform: scale(1.15);
+    color: #ffd700; /* Brighter gold on hover */
+    text-shadow: 0px 0px 10px rgba(255, 204, 0, 0.8);
+}
+
+@keyframes sparkle {
+    0% { transform: scale(1); color: #ffcc00; }
+    100% { transform: scale(1.2); color: #ffd700; }
+}
+
+.star-icon:nth-child(odd) {
+    animation: sparkle 1s infinite alternate ease-in-out;
+}
+
+.star-icon:nth-child(even) {
+    animation: sparkle 1s 0.5s infinite alternate ease-in-out;
+}
+
+
+/* Mobile View */
+@media (max-width: 768px) {
+    .explore-menu {
+        gap: 12px;
+        padding: 0 8px;
+    }
+
+    .explore-menu h1 {
+        font-size: 18px;
+    }
+
+    .explore-menu-text {
+        font-size: 11px;
+        max-width: 100%;
+    }
+
+    /* Category Sorting */
+    .explore-menu-list {
+        gap: 10px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 8px;
+        scroll-snap-type: x mandatory;
+    }
+
+    .explore-menu-list-item {
+        width: 140px;
+        padding: 8px;
+        font-size: 0.7rem;
+        scroll-snap-align: center;
+    }
+
+    .explore-menu-list-item img {
+        width: 120px;
+        height: 90px;
+    }
+
+    .restaurant-details {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .restaurant-details p {
+        font-size: 0.4rem !important;
+    }
+
+    .rating {
+        gap: 2px;
+    }
+
+    .star-icon {
+        font-size: 12px;
+    }
+
+    .map-container {
+        height: 180px;
+    }
+
+    .full-screen-card-container {
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+        position: relative;
+      }
+      
+      .full-screen-card-wrapper {
+        display: flex;
+        width: 200%;
+        height: 100%;
+        transition: transform 0.5s ease-in-out;
+      }
+      
+      .full-screen-card {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: linear-gradient(to right, #ff6b6b, #ffb3b3);
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+      }
+      
+      .demo-card {
+        background: linear-gradient(to right, #4b79a1, #283e51);
+      }
+      
+      .swipe-text {
+        font-size: 1rem;
+        margin-top: 20px;
+        opacity: 0.8;
+        animation: fadeIn 1.5s infinite alternate;
+      }
+      
+      @keyframes fadeIn {
+        from {
+          opacity: 0.5;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      
+}
+
+/* Extra Small Devices */
+@media (max-width: 480px) {
+    .explore-menu h1 {
+        font-size: 16px;
+    }
+
+    .explore-menu-text {
+        font-size: 10px;
+    }
+
+    .address-input {
+        font-size: 13px;
+        padding: 8px 35px;
+    }
+
+    .locate-me-btn {
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+
+    .explore-menu-list {
+        gap: 8px;
+    }
+
+    .explore-menu-list-item {
+        width: 130px;
+        padding: 7px;
+    }
+
+    .explore-menu-list-item img {
+        width: 110px;
+        height: 85px;
+    }
+
+    .map-container {
+        height: 160px;
+    }
+}
