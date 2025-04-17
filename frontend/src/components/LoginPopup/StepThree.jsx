@@ -21,6 +21,8 @@ function StepThree({
   const [isCodeVerified, setIsCodeVerified] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [verifyCodeError, setVerifyCodeError] = useState("");
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+
 
   const obfuscateEmail = (email) => {
     const [name, domain] = email.split("@");
@@ -89,6 +91,7 @@ const handleVerifyCode = async () => {
         toast.success("Password reset successfully!");
         setCode("");
         setNewPassword("");
+        setIsPasswordReset(true);
       } else {
         toast.error("Failed to reset password.");
       }
@@ -118,6 +121,19 @@ const handleVerifyCode = async () => {
       toast.error(err.response?.data?.message || "Login failed");
     }
   };
+
+  if (isPasswordReset) {
+    return (
+      <div className="form-group">
+        <h2>Password Reset Successfully!</h2>
+        <p>You can now log in with your new password.</p>
+        <button onClick={() => setShowResetOptions(false)} className="submit-button">
+          Go to Login
+        </button>
+      </div>
+    );
+  }
+  
 
   return (
     <div className="form-group">

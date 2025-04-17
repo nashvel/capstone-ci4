@@ -1,0 +1,10 @@
+<<<<<<< HEAD
+language: node_js
+
+node_js:
+=======
+language: node_js
+
+node_js:
+>>>>>>> 60d50bc (first commit)
+  - 8

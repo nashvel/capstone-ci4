@@ -1,0 +1,8 @@
+<<<<<<< HEAD
+# Dependency directories
+node_modules/
+=======
+# Dependency directories
+node_modules/
+>>>>>>> 60d50bc (first commit)
+.vscode/

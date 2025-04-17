@@ -4,14 +4,20 @@ import { assets } from "../../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
+import girl from "../../assets/avatars/girl.jpg";
+import girl2 from "../../assets/avatars/girl2.jpg";
+import boy from "../../assets/avatars/boy.png";
+import boy1 from "../../assets/avatars/boy1.jpg";
 
 function MyProfile() {
   const navigate = useNavigate();
 
   const [editMode, setEditMode] = useState(false);
   const [avatar, setAvatar] = useState(assets.profile_icon);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [apartmentNo, setApartmentNo] = useState("");
@@ -23,14 +29,11 @@ function MyProfile() {
   const [updateLoading, setUpdateLoading] = useState(false);
 
   useEffect(() => {
-    const storedName = localStorage.getItem("Name") || "Guest";
-    const storedEmail = localStorage.getItem("Email") || "user@example.com";
-    const storedPhone = localStorage.getItem("Phone") || "";
+    setFirstName(localStorage.getItem("userFirstName") || "Guest");
+    setLastName(localStorage.getItem("userLastName") || "");
+    setEmail(localStorage.getItem("Email") || "user@example.com");
+    setPhone(localStorage.getItem("Phone") || "");
     const storedAvatar = localStorage.getItem("Avatar");
-
-    setName(storedName);
-    setEmail(storedEmail);
-    setPhone(storedPhone);
     if (storedAvatar) setAvatar(storedAvatar);
   }, []);
 
@@ -42,26 +45,60 @@ function MyProfile() {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+  
     const reader = new FileReader();
-    reader.onload = () => {
-      setAvatar(reader.result);
-      localStorage.setItem("Avatar", reader.result);
+    reader.onloadend = async () => {
+      const base64Image = reader.result;
+      setAvatar(base64Image);
+      localStorage.setItem("Avatar", base64Image);
+      console.log("Sending avatar:", base64Image);
+  
+      try {
+        await axios.post(
+          "http://localhost:8080/updateAvatar",
+          {
+            email,
+            avatar: base64Image,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+  
+        toast.success("Avatar updated successfully!");
+      } catch (err) {
+        toast.error("Failed to update avatar");
+        console.error(err);
+      }
     };
     reader.readAsDataURL(file);
   };
+  
 
   const updateUser = async (e) => {
     e.preventDefault();
     setUpdateLoading(true);
-
+  
     try {
-      const res = await axios.post("http://localhost:8080/updateName", {
-        email,
-        name,
-      });
-
+      const res = await axios.post(
+        "http://localhost:8080/updateName",
+        {
+          email: email,
+          first_name: firstName,
+          last_name: lastName,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
       if (res.data.message === "Name updated successfully") {
-        localStorage.setItem("Name", name);
+        localStorage.setItem("userFirstName", firstName);
+        localStorage.setItem("userLastName", lastName);
         localStorage.setItem("Phone", phone);
         toast.success("Profile updated!");
         setEditMode(false);
@@ -72,9 +109,10 @@ function MyProfile() {
       console.error(err);
       toast.error("An error occurred.");
     }
-
+  
     setUpdateLoading(false);
   };
+  
 
   return (
     <div className="my-profile-wrapper">
@@ -89,19 +127,17 @@ function MyProfile() {
         <div className="avatar-wrapper">
           <img src={avatar} alt="Avatar" className="avatar-img" />
           {editMode && (
-            <label className="edit-overlay">
-              📷
-              <input
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={handleAvatarChange}
-              />
-            </label>
+            <button
+              className="btn btn-sm btn-outline-primary"
+              style={{ marginTop: "60px" }}
+              onClick={() => setShowAvatarModal(true)}
+            >
+              Change Avatar
+            </button>
           )}
         </div>
         <div className="name-section">
-          <h2>{name}</h2>
+          <h2>{`${firstName} ${lastName}`}</h2>
           <p>{email}</p>
           {!editMode && (
             <button className="edit-btn" onClick={() => setEditMode(true)}>
@@ -116,9 +152,15 @@ function MyProfile() {
           <p className="section-title">Contact</p>
           <input
             type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
           />
           <input
             type="number"
@@ -189,6 +231,51 @@ function MyProfile() {
       )}
 
       <h4>***Map update coming soon***</h4>
+
+      {showAvatarModal && (
+        <div className="modal fade show" tabIndex="-1" style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Choose Your Avatar</h5>
+                <button type="button" className="btn-close" onClick={() => setShowAvatarModal(false)}></button>
+              </div>
+              <div className="modal-body text-center">
+                <p className="select-label">Pick one or upload your own:</p>
+                <div className="avatar-options mb-3">
+                  {[girl, girl2, boy, boy1].map((img, index) => (
+                    <img
+                      key={index}
+                      src={img}
+                      alt={`avatar-${index}`}
+                      className={`avatar-option ${avatar === img ? "selected" : ""}`}
+                      onClick={() => {
+                        setAvatar(img);
+                        localStorage.setItem("Avatar", img);
+                        setShowAvatarModal(false);
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="upload-wrapper">
+                  <label className="btn btn-outline-secondary">
+                    Upload Avatar
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => {
+                        handleAvatarChange(e);
+                        setShowAvatarModal(false);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

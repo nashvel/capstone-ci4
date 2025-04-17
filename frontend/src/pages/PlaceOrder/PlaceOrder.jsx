@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import gcash_qrcode from "../../assets/gcash_qrcode.jpg";
 import { useNavigate } from "react-router-dom";
 import GoogleMapComponent from "../../components/GoogleMap/GoogleMap";
+import axios from "axios";
 
 function PlaceOrder() {
   const { getTotalCartAmount, food_list, cartItems, promoApplied, clearCart } = useContext(StoreContext);
@@ -15,7 +16,9 @@ function PlaceOrder() {
   const [showMap, setShowMap] = useState(false);
   const navigate = useNavigate();
   const [orderType, setOrderType] = useState(localStorage.getItem("deliveryOption") || "deliver");
-  const [data, setData] = useState({  
+  const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
+
+  const [data, setData] = useState({
     name: "",
     email: "",
     phone: "",
@@ -24,8 +27,24 @@ function PlaceOrder() {
 
   useEffect(() => {
     const savedData = JSON.parse(localStorage.getItem("orderData"));
-    if (savedData) {
-      setData(savedData);
+    if (savedData) setData(savedData);
+
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail) {
+      axios.post("http://localhost:8080/get-user", { email: userEmail }, { withCredentials: true })
+
+        .then((res) => {
+          if (res.data.user) {
+            setData((prevData) => ({
+              ...prevData,
+              name: `${res.data.user.first_name} ${res.data.user.last_name}`,
+              email: res.data.user.email,
+            }));
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching user:", error);
+        });
     }
   }, []);
 
@@ -38,11 +57,37 @@ function PlaceOrder() {
       .filter((id) => cartItems[id] > 0)
       .reduce((acc, id) => {
         const item = food_list.find((food) => food._id === id);
-        if (item) {
-          acc[item.name] = cartItems[id]; 
-        }
+        if (item) acc[item.name] = cartItems[id];
         return acc;
       }, {});
+  };
+
+  const locateMe = async () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setCoordinates({ lat, lng });
+
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          const result = await res.json();
+          const address = result.display_name;
+          setData((prev) => ({ ...prev, address }));
+          toast.success("Address auto-filled!");
+        } catch (error) {
+          toast.error("Failed to fetch address");
+        }
+      },
+      () => {
+        toast.error("Location access denied");
+      }
+    );
   };
 
   const handleOrder = async (paymentMethod) => {
@@ -50,47 +95,39 @@ function PlaceOrder() {
       toast.error("Please fill in all required fields.");
       return;
     }
-  
+
     if (orderType === "deliver" && (!data.phone || !data.address)) {
       toast.error("Please enter your phone number and delivery address.");
       return;
     }
-  
+
     const orderItems = getOrderItems();
     if (Object.keys(orderItems).length === 0) {
       toast.error("Your cart is empty!");
       return;
     }
-  
+
     setLoading(paymentMethod === "online");
     setCodLoading(paymentMethod === "cod");
-  
+
     const orderData = {
       name: data.name,
       email: data.email,
-      order_type: orderType, 
-      phone: orderType === "deliver" ? data.phone : null, 
-      address: orderType === "deliver" ? data.address : "Tagoloan", 
+      order_type: orderType,
+      phone: orderType === "deliver" ? data.phone : null,
+      address: orderType === "deliver" ? data.address : "Tagoloan",
       items: orderItems,
       total_price: promoApplied ? getTotalCartAmount() + 5 - 25 : getTotalCartAmount() + 5,
       payment_method: paymentMethod,
+      latitude: coordinates.lat,
+      longitude: coordinates.lng,
     };
-  
 
     localStorage.setItem("orderData", JSON.stringify(orderData));
-  
+
     try {
-      const response = await fetch("http://localhost:8080/place-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
-      
-      console.log("Response Headers: ", response.headers);
-      console.log("Response Status: ", response.status);
-      
-  
-      if (response.ok) {
+      const response = await axios.post("http://localhost:8080/place-order", orderData, { withCredentials: true });
+      if (response.status === 200) {
         toast.success("Order placed successfully!");
         clearCart();
         localStorage.removeItem("orderData");
@@ -99,13 +136,13 @@ function PlaceOrder() {
         toast.error("Order failed! Please try again.");
       }
     } catch (error) {
+      console.error(error);
       toast.error("Something went wrong.");
     } finally {
       setLoading(false);
       setCodLoading(false);
     }
   };
-  
 
   return (
     <>
@@ -122,6 +159,7 @@ function PlaceOrder() {
               <>
                 <input required name="phone" value={data.phone} onChange={onChangeHandler} type="number" placeholder="Phone Number" />
                 <input required name="address" value={data.address} onChange={onChangeHandler} type="text" placeholder="Delivery Address" />
+                <button type="button" className="locate-me-btn" onClick={locateMe}>📍 Locate Me</button>
               </>
             ) : (
               <>
@@ -183,14 +221,10 @@ function PlaceOrder() {
       {showGcashPopup && (
         <div className="gcash-popup">
           <div className="gcash-popup-content">
-            <span className="close" onClick={() => setShowGcashPopup(false)}>
-              &times;
-            </span>
+            <span className="close" onClick={() => setShowGcashPopup(false)}>&times;</span>
             <h2>Scan to Pay with GCash</h2>
             <img src={gcash_qrcode} alt="GCash QR Code" className="gcash-qr" style={{ width: "400px", height: "auto" }} />
-            <button className="verify-btn" onClick={() => handleOrder("online")}>
-              Verify Payment
-            </button>
+            <button className="verify-btn" onClick={() => handleOrder("online")}>Verify Payment</button>
           </div>
         </div>
       )}

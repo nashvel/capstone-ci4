@@ -42,7 +42,7 @@ function Cart() {
       setValidPromo(
         promo === "APEX"
           ? "Cart value must be more than ₱150 to avail this offer!"
-          : "Invalid Promo code."
+          : ""
       );
       applyPromoC(false);
     }
@@ -216,7 +216,7 @@ function Cart() {
                   type="text"
                   value={promo}
                   onChange={(e) => setPromo(e.target.value)}
-                  placeholder="ENTER OUR TEAM NAME"
+                  placeholder="Enter Coupon"
                 />
                 <button onClick={applyPromo}>Submit</button>
               </div>

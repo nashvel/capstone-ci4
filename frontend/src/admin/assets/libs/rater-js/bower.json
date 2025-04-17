@@ -1,0 +1,20 @@
+<<<<<<< HEAD
+{
+    "name":"rater-js",
+    "main":[
+        "index.js"
+    ],
+    "ignore":[
+        "**/.*"
+    ]
+=======
+{
+    "name":"rater-js",
+    "main":[
+        "index.js"
+    ],
+    "ignore":[
+        "**/.*"
+    ]
+>>>>>>> 60d50bc (first commit)
+}

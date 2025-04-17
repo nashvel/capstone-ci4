@@ -149,7 +149,11 @@ const handleEmailSuggestionClick = (suggestion) => {
       toast.success(response.data.message || "Login successful!");
   
       localStorage.setItem("Token", response.data.token);  // this fixes the navbar
-      localStorage.setItem("Email", userData.email);    
+      localStorage.setItem("Email", userData.email);
+      localStorage.setItem("userEmail", response.data.email);
+      localStorage.setItem("userFirstName", response.data.first_name);
+      localStorage.setItem("userLastName", response.data.last_name);  
+      localStorage.setItem("Avatar", response.data.avatar);         
   
       setTimeout(() => {
         setShowLogin(false); // hide the popup *after* toast appears
