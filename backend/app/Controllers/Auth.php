@@ -179,33 +179,38 @@ class Auth extends ResourceController
 }
 
     
-    public function login()
-    {
-        $data = $this->request->getJSON(true);
-        $email = $data['email'] ?? null;
-        $password = $data['password'] ?? null;
+public function login()
+{
+    $data = $this->request->getJSON(true);
+    $email = $data['email'] ?? null;
+    $password = $data['password'] ?? null;
 
-        if (!$email || !$password) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email and password are required']);
-        }
-
-        $user = $this->userModel->where('email', $email)->first();
-
-        if (!$user || !password_verify($password, $user['password'])) {
-            return $this->response->setStatusCode(401)->setJSON(['message' => 'Invalid email or password']);
-        }
-
-        if ($user['is_verified'] == 0) {
-            return $this->response->setStatusCode(403)->setJSON(['message' => 'Email not verified']);
-        }
-
-        return $this->response->setJSON([
-            'message' => 'Login successful',
-            'email' => $user['email'],
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name']
-        ]);
+    if (!$email || !$password) {
+        return $this->response->setStatusCode(400)->setJSON(['message' => 'Email and password are required']);
     }
+
+    $user = $this->userModel->where('email', $email)->first();
+
+    if (!$user || !password_verify($password, $user['password'])) {
+        return $this->response->setStatusCode(401)->setJSON(['message' => 'Invalid email or password']);
+    }
+
+    if ($user['is_verified'] == 0) {
+        return $this->response->setStatusCode(403)->setJSON(['message' => 'Email not verified']);
+    }
+
+    // ✅ Now it's safe to access $user['avatar']
+    return $this->response->setJSON([
+        'message' => 'Login successful',
+        'email' => $user['email'],
+        'first_name' => $user['first_name'],
+        'last_name' => $user['last_name'],
+        'avatar' => $user['avatar']
+    ]);
+}
+
+
+
 
 
     public function sendResetCode()
@@ -424,5 +429,57 @@ class Auth extends ResourceController
         } 
 
     }    
+
+    public function getUser()
+    {
+        $data = $this->request->getJSON(true);
+        $email = $data['email'] ?? null;
+    
+        if (!$email) {
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Email is required']);
+        }
+    
+        $user = $this->userModel
+            ->select('first_name, last_name, email')
+            ->where('email', $email)
+            ->first();
+    
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['message' => 'User not found']);
+        }
+    
+        return $this->response->setJSON(['user' => $user]);
+    }
+    
+public function updateAvatar()
+{
+    $json = $this->request->getJSON();
+    $email = $json->email ?? null;
+    $avatar = $json->avatar ?? null;
+
+    if (!$email || !$avatar) {
+        return $this->response->setJSON(['message' => 'Email and avatar required'])->setStatusCode(400);
+    }
+
+    // ✅ Remove base64 header if present
+    if (preg_match('/^data:image\/\w+;base64,/', $avatar)) {
+        $avatar = preg_replace('/^data:image\/\w+;base64,/', '', $avatar);
+    }
+
+    $userModel = new \App\Models\UserModel();
+    $user = $userModel->where('email', $email)->first();
+
+    if (!$user) {
+        return $this->response->setJSON(['message' => 'User not found'])->setStatusCode(404);
+    }
+
+    // ✅ Update avatar in database
+    $userModel->update($user['id'], ['avatar' => $avatar]);
+
+    return $this->response->setJSON(['message' => 'Avatar updated successfully']);
+}
+
+
+    
 
 }    

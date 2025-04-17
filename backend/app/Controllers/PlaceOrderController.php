@@ -33,7 +33,7 @@ class PlaceOrderController extends ResourceController
             $request['address'] = "Tagoloan";
         }
 
-        // ✅ Insert order with first_name & last_name
+        // ✅ Insert order with geolocation if provided
         $orderModel->insert([
             'user_id'        => $loggedInUser['id'],
             'first_name'     => $loggedInUser['first_name'],
@@ -45,6 +45,8 @@ class PlaceOrderController extends ResourceController
             'items'          => json_encode($request['items']),
             'total_price'    => $request['total_price'],
             'payment_method' => $request['payment_method'] ?? 'cod',
+            'latitude'       => $request['latitude'] ?? null,
+            'longitude'      => $request['longitude'] ?? null,
         ]);
 
         $orderId = $orderModel->insertID();
@@ -72,17 +74,20 @@ class PlaceOrderController extends ResourceController
     {
         $emailConfig = config('Email');
         $email = \Config\Services::email();
-
+    
         $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
         $email->setTo($order['email']);
         $email->setSubject('Order Confirmation');
-
+    
+        // ✅ Make sure items is an array
+        $items = is_string($order['items']) ? json_decode($order['items'], true) : $order['items'];
+    
         // Format order items
         $orderItems = "";
-        foreach ($order['items'] as $item => $quantity) {
+        foreach ($items as $item => $quantity) {
             $orderItems .= strtoupper($item) . " x" . $quantity . "<br>";
         }
-
+    
         $fullName = "{$order['first_name']} {$order['last_name']}";
         $message = "
             <p>Hi <strong>{$fullName}</strong>,</p>
@@ -90,19 +95,20 @@ class PlaceOrderController extends ResourceController
             <h3>Order Details:</h3>
             <p>{$orderItems}</p>
             <h3>Total: ₱{$order['total_price']}</h3>";
-
+    
         if ($order['order_type'] === "deliver") {
             $message .= "<p>📍 <strong>Delivery Address:</strong> {$order['address']}</p>
                          <p>📞 <strong>Contact Number:</strong> {$order['phone']}</p>";
         } else {
             $message .= "<p>📍 <strong>Pick-up Location:</strong> Tagoloan</p>";
         }
-
+    
         $email->setMessage(nl2br($message));
         $email->setMailType($emailConfig->mailType ?? 'html');
-
+    
         if (!$email->send()) {
             log_message('error', 'Email sending failed: ' . $email->printDebugger(['headers']));
         }
     }
+    
 }
